@@ -2,38 +2,67 @@
 //  TodoViewModel.swift
 //  MVVMDataManaging
 //
-//  Created by yoonie on 12/1/25.
-//
 
 import Foundation
 import Combine
 
 
 class TodoViewModel: ObservableObject {
-    
     @Published var todos: [Todo] = []
     @Published var newTodoText: String = ""
     
+    private let todoKey: String = "savedTodos"
+    
     var completedCount: Int {
-        return todos.filter { $0.isDone }.count
+        todos.filter { $0.isDone }.count
     }
+    
+    var totalCount: Int {
+        todos.count
+    }
+    
+    var notCompletedCount: Int {
+        totalCount - completedCount
+    }
+    
+    var completionRate: String {
+        let rate = Double(completedCount) / Double(totalCount) * 100
+        return rate.formatted(.number.precision(.fractionLength(0)))
+    }
+    
+    init() {
+        loadTodos()
+    }
+    
+    func loadTodos() {
+        guard let data = UserDefaults.standard.data(forKey: todoKey),
+              let decoded = try? JSONDecoder().decode([Todo].self, from: data) else {return}
+        todos = decoded
+    }
+    
+    func saveTodos() {
+        guard let encoded = try? JSONEncoder().encode(todos) else {return}
+        UserDefaults.standard.set(encoded, forKey: todoKey)
+    }
+    
     
     func addTodo() {
-        let newTodo = Todo(content: newTodoText)
-        if !newTodo.content.isEmpty {
-            todos.append(newTodo)
-            UserDefaults.standard.set(newTodo, forKey: newTodo.id)
-            newTodoText = ""
-        }
+        let trimmed = newTodoText.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return }
+        let newTodo = Todo(content: trimmed)
+        todos.append(newTodo)
+        saveTodos()
+        newTodoText = ""
     }
     
-    func toggleDone(id: String) {
-        guard let index = todos.firstIndex(where: { $0.id == id }) else { return }
+    func toggleTodo(id: UUID) {
+        guard let index = todos.firstIndex(where: { $0.id == id }) else {return}
         todos[index].isDone.toggle()
-        UserDefaults.standard.set(todos[index], forKey: todos[index].id)
+        saveTodos()
     }
     
-    func deleteTodo(id: String) {
+    func deleteTodo(id: UUID) {
         todos.removeAll(where: { $0.id == id })
+        saveTodos()
     }
 }
