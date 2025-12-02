@@ -6,6 +6,7 @@
 
 import SwiftUI
 
+
 struct TodoListView: View {
     @StateObject var todoVM: TodoViewModel = TodoViewModel()
     
@@ -34,38 +35,15 @@ struct TodoListView: View {
                 }
                 .padding()
                 
-                
                 List {
                     ForEach($todoVM.todos) { $todo in
-                        HStack(spacing: 20) {
-                            Button {
-                                //action
-                                todoVM.toggleTodo(id: todo.id)
-                            } label: {
-                                Image(systemName: todo.isDone ? "checkmark.square" : "square")
-                                    .font(.title3)
-                                    .foregroundStyle(todo.isDone ? .green : .red)
-                            }
-                            
-                            Text(todo.content)
-                                .font(.headline)
-                                .fontWeight(.semibold)
-                                .strikethrough(todo.isDone, color: .red)
-                            
-                            Spacer()
-                            
-                            Text("삭제")
-                                .font(.caption)
-                                .foregroundStyle(.red)
-                                .padding(.horizontal)
-                                .onTapGesture(count: 2) {
-                                    todoVM.deleteTodo(id: todo.id)
-                                }
-                        }//: HStack
+                        TodoRowView(
+                            viewModel: todoVM,
+                            todo: $todo
+                            )
                     }//: Loop
                 }//: List
                 .padding()
-                
 
                 VStack(spacing: 20) {
                     Text("완료: \(todoVM.completedCount) / \(todoVM.todos.count)")
@@ -89,5 +67,6 @@ struct TodoListView: View {
 }
 
 #Preview {
-    TodoListView()
+    
+    TodoListView(todoVM: TodoViewModel())
 }
